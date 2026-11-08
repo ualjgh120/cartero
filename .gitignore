@@ -1,0 +1,13 @@
+venv/
+build/
+dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+# Datos REALES de clientes: nunca se suben al repositorio
+pruebas/reales/
+*.sqlite
+
+# Informes de estado internos (contienen datos de clientes)
+docs/

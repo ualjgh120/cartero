@@ -1,0 +1,91 @@
+# Compila la app para Mac (.dmg) y Windows (instalador .exe) en los ordenadores
+# de GitHub cada vez que se suben cambios. Al crear una etiqueta vX.Y.Z,
+# además publica una "Release" con los dos instaladores.
+name: Compilar
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dependencias
+        run: pip install -r requirements-dev.txt
+      - name: Pruebas
+        run: python -m pytest pruebas -q -p no:warnings
+        env:
+          QT_QPA_PLATFORM: offscreen
+      - name: Icono
+        run: python empaquetado/icono.py
+      - name: Compilar .exe
+        run: python -m PyInstaller empaquetado/app.spec --noconfirm
+      - name: Autoprueba del .exe ya empaquetado
+        shell: pwsh
+        run: |
+          $nombre = python -c "from nucleo.config import NOMBRE_APP; print(NOMBRE_APP)"
+          python -c "import sys; sys.path[:0]=['pruebas']; from utiles import factura_ejidosoft; factura_ejidosoft('prueba.pdf', 'AGRICOLA FERVALIA S.L.')"
+          $p = Start-Process -FilePath "dist\$nombre\$nombre.exe" -Wait -PassThru -ArgumentList @("--autoprueba", "prueba.pdf", "--salida", "autoprueba.txt")
+          Get-Content autoprueba.txt
+          if ($p.ExitCode -ne 0) { throw "La autoprueba del .exe ha fallado" }
+      - name: Instalador
+        shell: pwsh
+        run: |
+          $nombre = python -c "from nucleo.config import NOMBRE_APP; print(NOMBRE_APP)"
+          $version = python -c "from nucleo.config import VERSION; print(VERSION)"
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) { choco install innosetup -y --no-progress }
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) { $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DNombre=$nombre" "/DVersion=$version" empaquetado\instalador.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            dist/*-Windows-instalador.exe
+            autoprueba.txt
+
+  mac:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dependencias
+        run: pip install -r requirements-dev.txt
+      - name: Pruebas
+        run: python -m pytest pruebas -q -p no:warnings
+        env:
+          QT_QPA_PLATFORM: offscreen
+      - name: Compilar .app y .dmg
+        run: PY=python bash empaquetado/compilar_mac.sh
+      - name: Autoprueba de la .app ya empaquetada
+        run: |
+          N=$(python -c "from nucleo.config import NOMBRE_APP; print(NOMBRE_APP)")
+          python -c "import sys; sys.path[:0]=['pruebas']; from utiles import factura_ejidosoft; factura_ejidosoft('prueba.pdf', 'AGRICOLA FERVALIA S.L.')"
+          "dist/$N.app/Contents/MacOS/$N" --autoprueba prueba.pdf
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: dist/*.dmg
+
+  publicar:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, mac]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            windows/*.exe
+            mac/*.dmg
