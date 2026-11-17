@@ -105,10 +105,15 @@ def test_no_confunde_con_palabras_sueltas(datos, tmp_path):
 
 
 # ------------------------------------------------------------ carpeta del mes
+def _r(ruta):
+    """Ruta con el separador del sistema (en Windows, la app devuelve barras invertidas)."""
+    return str(Path(ruta))
+
+
 def test_carpeta_del_mes():
     base = "/srv/Facturas"
-    assert A.carpeta_del_mes(base, "FACTURAS {MES} {AA}", date(2026, 9, 3)) == "/srv/Facturas/FACTURAS SEPTIEMBRE 26"
-    assert A.carpeta_del_mes(base, "{AAAA}/{MM} {Mes}", date(2026, 1, 9)) == "/srv/Facturas/2026/01 Enero"
+    assert A.carpeta_del_mes(base, "FACTURAS {MES} {AA}", date(2026, 9, 3)) == _r("/srv/Facturas/FACTURAS SEPTIEMBRE 26")
+    assert A.carpeta_del_mes(base, "{AAAA}/{MM} {Mes}", date(2026, 1, 9)) == _r("/srv/Facturas/2026/01 Enero")
     assert A.carpeta_del_mes(base, "", date(2026, 1, 9)) == base
     assert A.mes_pasado(date(2026, 1, 15)) == date(2025, 12, 1)
 
@@ -277,13 +282,13 @@ def test_contrasena_en_el_llavero(datos, monkeypatch):
 
 
 def test_inferir_patron():
-    assert A.inferir_patron("/srv/Facturas/2026/FACTURAS SEPTIEMBRE 26") == ("/srv/Facturas", "{AAAA}/FACTURAS {MES} {AA}")
-    assert A.inferir_patron("/srv/Facturas/2026-09") == ("/srv/Facturas", "{AAAA}-{MM}")
-    assert A.inferir_patron("/srv/F/Octubre 2026") == ("/srv/F", "{Mes} {AAAA}")
-    assert A.inferir_patron("/srv/F/09 2026") == ("/srv/F", "{MM} {AAAA}")
+    assert A.inferir_patron("/srv/Facturas/2026/FACTURAS SEPTIEMBRE 26") == (_r("/srv/Facturas"), "{AAAA}/FACTURAS {MES} {AA}")
+    assert A.inferir_patron("/srv/Facturas/2026-09") == (_r("/srv/Facturas"), "{AAAA}-{MM}")
+    assert A.inferir_patron("/srv/F/Octubre 2026") == (_r("/srv/F"), "{Mes} {AAAA}")
+    assert A.inferir_patron("/srv/F/09 2026") == (_r("/srv/F"), "{MM} {AAAA}")
     assert A.inferir_patron("/srv/F/Emitidas") is None
     base, patron = A.inferir_patron("/srv/Facturas/2026/FACTURAS SEPTIEMBRE 26")
-    assert A.carpeta_del_mes(base, patron, date(2027, 1, 5)) == "/srv/Facturas/2027/FACTURAS ENERO 27"
+    assert A.carpeta_del_mes(base, patron, date(2027, 1, 5)) == _r("/srv/Facturas/2027/FACTURAS ENERO 27")
 
 
 def test_nif_propio_se_detecta_aunque_no_este_en_ajustes(datos, carpeta_mes):

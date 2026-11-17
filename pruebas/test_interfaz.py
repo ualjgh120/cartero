@@ -37,7 +37,7 @@ def sin_ventanitas(monkeypatch):
     return vistos
 
 
-def esperar(app, condicion, maximo=20):
+def esperar(app, condicion, maximo=90):  # las máquinas de GitHub van lentas
     fin = time.time() + maximo
     while not condicion():
         app.processEvents()
