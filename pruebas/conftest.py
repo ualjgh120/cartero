@@ -47,4 +47,10 @@ def pytest_unconfigure(config):
     if "PySide6.QtWidgets" in sys.modules:
         sys.stdout.flush()
         sys.stderr.flush()
+        if sys.platform == "win32":
+            # En Windows, os._exit todavía pasa por la limpieza de las DLL de Qt,
+            # que es lo que se cae; TerminateProcess cierra sin ella.
+            import ctypes
+            k32 = ctypes.windll.kernel32
+            k32.TerminateProcess(k32.GetCurrentProcess(), _estado_final["codigo"])
         os._exit(_estado_final["codigo"])
