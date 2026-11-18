@@ -44,11 +44,25 @@ jobs:
           $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
           if (-not $iscc) { $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" }
           & $iscc "/DNombre=$nombre" "/DVersion=$version" empaquetado\instalador.iss
+      - name: Paquete MSIX para la Microsoft Store
+        shell: pwsh
+        env:
+          MSIX_IDENTIDAD: ${{ vars.MSIX_IDENTIDAD }}
+          MSIX_EDITOR: ${{ vars.MSIX_EDITOR }}
+          MSIX_NOMBRE_EDITOR: ${{ vars.MSIX_NOMBRE_EDITOR }}
+        run: |
+          $nombre = python -c "from nucleo.config import NOMBRE_APP; print(NOMBRE_APP)"
+          $version = python -c "from nucleo.config import VERSION; print(VERSION)"
+          python empaquetado/msix.py
+          $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe" | Sort-Object FullName -Descending | Select-Object -First 1
+          & $makeappx.FullName pack /o /d build\msix /p "dist\$nombre-$version.msix"
+          if ($LASTEXITCODE -ne 0) { throw "makeappx ha fallado" }
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: |
             dist/*-Windows-instalador.exe
+            dist/*.msix
             autoprueba.txt
 
   mac:
