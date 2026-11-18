@@ -1,7 +1,7 @@
 ; Instalador de Windows (Inno Setup, gratuito). Lo lanza GitHub Actions:
-;   iscc /DNombre=Cartero /DVersion=0.1.0 empaquetado\instalador.iss
+;   iscc "/DNombre=Cartero Facturas" /DVersion=0.1.0 empaquetado\instalador.iss
 #ifndef Nombre
-  #define Nombre "Cartero"
+  #define Nombre "Cartero Facturas"
 #endif
 #ifndef Version
   #define Version "0.1.0"
@@ -12,7 +12,7 @@
 AppId={{1A0581BD-68BE-4CE9-8B1E-5A0C78384849}
 AppName={#Nombre}
 AppVersion={#Version}
-AppPublisher={#Nombre}
+AppPublisher=JghDesWeb
 DefaultDirName={autopf}\{#Nombre}
 DefaultGroupName={#Nombre}
 DisableProgramGroupPage=yes

@@ -18,7 +18,7 @@ from email.utils import formataddr, make_msgid
 from html import escape
 from pathlib import Path
 
-from nucleo.config import NOMBRE_APP
+from nucleo.config import NOMBRE_INTERNO
 from nucleo.emparejar import emails_de
 
 
@@ -121,7 +121,7 @@ def guardar_clave(datos, ajustes: dict, clave: str) -> bool:
     usuario = _usuario_llavero(ajustes)
     try:
         import keyring
-        keyring.set_password(NOMBRE_APP, usuario, clave)
+        keyring.set_password(NOMBRE_INTERNO, usuario, clave)
         datos.guardar_ajuste("clave_local", None)
         return True
     except Exception:  # noqa: BLE001 — sin llavero (algunos Linux, sesiones raras)
@@ -133,7 +133,7 @@ def leer_clave(datos, ajustes: dict) -> str:
     usuario = _usuario_llavero(ajustes)
     try:
         import keyring
-        clave = keyring.get_password(NOMBRE_APP, usuario)
+        clave = keyring.get_password(NOMBRE_INTERNO, usuario)
         if clave:
             return clave
     except Exception:  # noqa: BLE001

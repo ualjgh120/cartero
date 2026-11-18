@@ -2,8 +2,8 @@
 """
 config.py — Nombre de la app y carpetas donde guarda sus datos.
 
-Cambiar NOMBRE_APP aquí lo cambia en toda la app (ventana, carpeta de datos,
-llavero). El empaquetado (.dmg/.exe) lee el mismo valor.
+Cambiar NOMBRE_APP aquí lo cambia en toda la app (ventana, ejecutable,
+instaladores). La carpeta de datos y el llavero usan NOMBRE_INTERNO, que no cambia. El empaquetado (.dmg/.exe) lee el mismo valor.
 """
 
 import os
@@ -11,7 +11,11 @@ import platform
 import sys
 from pathlib import Path
 
-NOMBRE_APP = "Cartero"
+NOMBRE_APP = "Cartero Facturas"
+# Nombre interno, fijo: carpeta de datos y llavero. No cambiarlo, o quien ya
+# use la app perdería su configuración y la contraseña guardada.
+NOMBRE_INTERNO = "Cartero"
+EDITOR = "JghDesWeb"
 VERSION = "0.1.0"
 
 
@@ -34,7 +38,7 @@ def carpeta_datos() -> Path:
             base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
         else:
             base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
-        carpeta = base / NOMBRE_APP
+        carpeta = base / NOMBRE_INTERNO
     carpeta.mkdir(parents=True, exist_ok=True)
     return carpeta
 

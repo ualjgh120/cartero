@@ -10,7 +10,7 @@ from PyInstaller.utils.hooks import collect_data_files
 
 RAIZ = Path(SPECPATH).parent
 sys.path.insert(0, str(RAIZ))
-from nucleo.config import NOMBRE_APP, VERSION  # noqa: E402
+from nucleo.config import NOMBRE_APP, NOMBRE_INTERNO, VERSION  # noqa: E402
 
 es_mac = sys.platform == "darwin"
 
@@ -42,7 +42,7 @@ if es_mac:
         coll,
         name=f"{NOMBRE_APP}.app",
         icon=str(RAIZ / "recursos" / "icono.icns"),
-        bundle_identifier=f"es.{NOMBRE_APP.lower()}.app",
+        bundle_identifier=f"es.{NOMBRE_INTERNO.lower()}.app",
         info_plist={
             "CFBundleShortVersionString": VERSION,
             "CFBundleVersion": VERSION,
