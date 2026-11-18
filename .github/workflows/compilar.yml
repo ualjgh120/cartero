@@ -20,7 +20,13 @@ jobs:
       - name: Dependencias
         run: pip install -r requirements-dev.txt
       - name: Pruebas
-        run: python -m pytest pruebas -q -p no:warnings
+        # En Windows, PySide6 a veces devuelve un código de salida erróneo al
+        # cerrarse aunque todo haya pasado: se decide por el informe JUnit.
+        shell: pwsh
+        run: |
+          python -m pytest pruebas -q -p no:warnings --junitxml=pruebas.xml
+          python -c "import xml.etree.ElementTree as E,sys; s=E.parse('pruebas.xml').getroot(); s=s if s.tag=='testsuite' else s[0]; m=int(s.get('failures'))+int(s.get('errors')); print('fallos+errores:',m, 'de', s.get('tests')); sys.exit(1 if m or int(s.get('tests'))==0 else 0)"
+          exit $LASTEXITCODE
         env:
           QT_QPA_PLATFORM: offscreen
       - name: Icono
@@ -50,6 +56,7 @@ jobs:
           MSIX_IDENTIDAD: ${{ vars.MSIX_IDENTIDAD }}
           MSIX_EDITOR: ${{ vars.MSIX_EDITOR }}
           MSIX_NOMBRE_EDITOR: ${{ vars.MSIX_NOMBRE_EDITOR }}
+          MSIX_NOMBRE_TIENDA: ${{ vars.MSIX_NOMBRE_TIENDA }}
         run: |
           $nombre = python -c "from nucleo.config import NOMBRE_APP; print(NOMBRE_APP)"
           $version = python -c "from nucleo.config import VERSION; print(VERSION)"

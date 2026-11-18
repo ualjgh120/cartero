@@ -13,6 +13,7 @@ producto) y se pasan por variables de entorno:
     MSIX_IDENTIDAD      Package/Identity/Name           p. ej. 12345JuanGonzalezHaro.Cartero
     MSIX_EDITOR         Package/Identity/Publisher      p. ej. CN=XXXXXXXX-XXXX-...
     MSIX_NOMBRE_EDITOR  Package/Properties/PublisherDisplayName
+    MSIX_NOMBRE_TIENDA  nombre reservado en la Store (p. ej. Cartero Facturas)
 Sin ellas se usan valores de prueba (sirve para comprobar que empaqueta).
 """
 import os
@@ -64,6 +65,7 @@ def main() -> None:
         "EDITOR": os.environ.get("MSIX_EDITOR") or "CN=Prueba",
         "NOMBRE_EDITOR": os.environ.get("MSIX_NOMBRE_EDITOR") or "Juan González Haro",
         "NOMBRE": NOMBRE_APP,
+        "NOMBRE_TIENDA": os.environ.get("MSIX_NOMBRE_TIENDA") or NOMBRE_APP,
         "VERSION": version,
     }
     for clave, valor in valores.items():
