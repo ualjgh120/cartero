@@ -12,6 +12,11 @@ on:
 jobs:
   windows:
     runs-on: windows-latest
+    env:
+      # Firma gratuita de SignPath Foundation: solo en versiones (etiquetas
+      # vX.Y.Z) y solo si el secreto SIGNPATH_API_TOKEN está puesto. Sin él,
+      # todo se compila igual que antes, sin firmar.
+      FIRMAR: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.SIGNPATH_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -41,6 +46,37 @@ jobs:
           $p = Start-Process -FilePath "dist\$nombre\$nombre.exe" -Wait -PassThru -ArgumentList @("--autoprueba", "prueba.pdf", "--salida", "autoprueba.txt")
           Get-Content autoprueba.txt
           if ($p.ExitCode -ne 0) { throw "La autoprueba del .exe ha fallado" }
+      - name: Subir el .exe para firmarlo
+        if: env.FIRMAR == 'true'
+        id: sin_firmar_app
+        uses: actions/upload-artifact@v4
+        with:
+          name: sin-firmar-app
+          path: dist/*/*.exe
+      - name: Firmar el .exe (SignPath)
+        if: env.FIRMAR == 'true'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: exe
+          github-artifact-id: ${{ steps.sin_firmar_app.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: firmado-app
+      - name: Colocar el .exe firmado
+        if: env.FIRMAR == 'true'
+        shell: pwsh
+        run: |
+          Get-ChildItem firmado-app -Filter *.exe | ForEach-Object {
+            $destino = Get-ChildItem -Path (Split-Path "dist/*/*.exe") -Filter $_.Name
+            Copy-Item $_.FullName $destino.FullName -Force
+            $firma = Get-AuthenticodeSignature $destino.FullName
+            Write-Host "$($destino.Name): $($firma.Status) - $($firma.SignerCertificate.Subject)"
+            if ($firma.Status -ne 'Valid') { throw "La firma de $($destino.Name) no es válida" }
+          }
       - name: Instalador
         shell: pwsh
         run: |
@@ -50,6 +86,37 @@ jobs:
           $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
           if (-not $iscc) { $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" }
           & $iscc "/DNombre=$nombre" "/DVersion=$version" empaquetado\instalador.iss
+      - name: Subir el instalador para firmarlo
+        if: env.FIRMAR == 'true'
+        id: sin_firmar_instalador
+        uses: actions/upload-artifact@v4
+        with:
+          name: sin-firmar-instalador
+          path: dist/*-Windows-instalador.exe
+      - name: Firmar el instalador (SignPath)
+        if: env.FIRMAR == 'true'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: exe
+          github-artifact-id: ${{ steps.sin_firmar_instalador.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: firmado-instalador
+      - name: Colocar el instalador firmado
+        if: env.FIRMAR == 'true'
+        shell: pwsh
+        run: |
+          Get-ChildItem firmado-instalador -Filter *.exe | ForEach-Object {
+            $destino = Get-ChildItem -Path (Split-Path "dist/*-Windows-instalador.exe") -Filter $_.Name
+            Copy-Item $_.FullName $destino.FullName -Force
+            $firma = Get-AuthenticodeSignature $destino.FullName
+            Write-Host "$($destino.Name): $($firma.Status) - $($firma.SignerCertificate.Subject)"
+            if ($firma.Status -ne 'Valid') { throw "La firma de $($destino.Name) no es válida" }
+          }
       - name: Paquete MSIX para la Microsoft Store
         shell: pwsh
         env:

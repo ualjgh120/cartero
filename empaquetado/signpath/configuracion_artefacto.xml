@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Configuración de artefacto para SignPath (copiar en el proyecto de
+     SignPath, apartado "Artifact configurations", con el slug "exe").
+     GitHub sube el .exe dentro de un .zip; SignPath firma todos los .exe
+     que haya en la raíz y devuelve el .zip con los .exe firmados. -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file-set>
+      <include path="*.exe" />
+      <for-each>
+        <authenticode-sign />
+      </for-each>
+    </pe-file-set>
+  </zip-file>
+</artifact-configuration>

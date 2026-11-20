@@ -72,3 +72,9 @@ interfaz/         asistente, páginas de ajustes, ventana, diálogos, estilo
 pruebas/          pytest: núcleo e interfaz, con PDF de prueba y servidor SMTP falso
 empaquetado/      PyInstaller, .dmg, instalador Windows (Inno Setup), icono
 ```
+
+## Licencia
+
+Cartero Facturas es software libre con licencia [GPL-3.0](LICENSE). Los
+ejecutables de Windows se firman gratis gracias a SignPath; ver
+[CODE_SIGNING_POLICY.md](CODE_SIGNING_POLICY.md).
